@@ -4,52 +4,71 @@ import { connect } from 'react-redux'
 import {
   selectSubreddit,
   fetchPostsIfNeeded,
-  invalidateSubreddit
+  invalidateSubreddit,
+  selectSize
 } from '../actions'
 import Picker from '../components/Picker'
 import Posts from '../components/Posts'
+import SizePicker from '../components/SizePicker'
 
 class AsyncApp extends Component {
   constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
     this.handleRefreshClick = this.handleRefreshClick.bind(this)
+    this.handleSelectedSizeChange = this.handleSelectedSizeChange.bind(this);
   }
 
   componentDidMount() {
-    const { dispatch, selectedSubreddit } = this.props
-    dispatch(fetchPostsIfNeeded(selectedSubreddit))
+    const { dispatch, selectedSubreddit, selectedSize } = this.props
+    dispatch(fetchPostsIfNeeded(selectedSubreddit, selectedSize))
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.selectedSubreddit !== prevProps.selectedSubreddit) {
-      const { dispatch, selectedSubreddit } = this.props
-      dispatch(fetchPostsIfNeeded(selectedSubreddit))
+      const { dispatch, selectedSubreddit, selectedSize } = this.props
+      dispatch(fetchPostsIfNeeded(selectedSubreddit, selectedSize))
     }
   }
 
   handleChange(nextSubreddit) {
+    const { selectedSize } = this.props
     this.props.dispatch(selectSubreddit(nextSubreddit))
-    this.props.dispatch(fetchPostsIfNeeded(nextSubreddit))
+    this.props.dispatch(fetchPostsIfNeeded(nextSubreddit, selectedSize))
   }
 
   handleRefreshClick(e) {
     e.preventDefault()
 
-    const { dispatch, selectedSubreddit } = this.props
+    const { dispatch, selectedSubreddit, selectedSize } = this.props
     dispatch(invalidateSubreddit(selectedSubreddit))
-    dispatch(fetchPostsIfNeeded(selectedSubreddit))
+    dispatch(fetchPostsIfNeeded(selectedSubreddit, selectedSize))
+  }
+
+  handleSelectedSizeChange(nextSelectedSize) {
+    const { selectedSubreddit } = this.props
+    this.props.dispatch(selectSize(nextSelectedSize))
+    this.props.dispatch(fetchPostsIfNeeded(selectedSubreddit, nextSelectedSize))
   }
 
   render() {
-    const { selectedSubreddit, posts, isFetching, lastUpdated } = this.props
+    const { selectedSubreddit, selectedSize, posts, isFetching, lastUpdated } = this.props
     return (
       <div>
-        <Picker
-          value={selectedSubreddit}
-          onChange={this.handleChange}
-          options={['bitcoin', 'frontend', 'vuejs']}
-        />
+        <div style={{display: 'inline-block', marginLeft: 20, width: 100}}>
+          <Picker
+            value={selectedSubreddit}
+            onChange={this.handleChange}
+            options={['bitcoin', 'frontend', 'vuejs']}
+          />
+        </div>
+        <div style={{display: 'inline-block', marginLeft: 50, width: 200}}>
+          <SizePicker
+            value={selectedSize}
+            onChange={this.handleSelectedSizeChange}
+            options={[5, 10, 15, 20]}
+          />
+        </div>
         <p>
           {lastUpdated &&
             <span>
@@ -74,6 +93,7 @@ class AsyncApp extends Component {
 
 AsyncApp.propTypes = {
   selectedSubreddit: PropTypes.string.isRequired,
+  selectedSize: PropTypes.number.isRequired,
   posts: PropTypes.array.isRequired,
   isFetching: PropTypes.bool.isRequired,
   lastUpdated: PropTypes.number,
@@ -81,7 +101,7 @@ AsyncApp.propTypes = {
 }
 
 function mapStateToProps(state) {
-  const { selectedSubreddit, postsBySubreddit } = state
+  const { selectedSubreddit, postsBySubreddit, selectedSize } = state
   const {
     isFetching,
     lastUpdated,
@@ -93,6 +113,7 @@ function mapStateToProps(state) {
 
   return {
     selectedSubreddit,
+    selectedSize,
     posts,
     isFetching,
     lastUpdated

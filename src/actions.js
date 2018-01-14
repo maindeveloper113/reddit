@@ -4,11 +4,19 @@ export const REQUEST_POSTS = 'REQUEST_POSTS'
 export const RECEIVE_POSTS = 'RECEIVE_POSTS'
 export const SELECT_SUBREDDIT = 'SELECT_SUBREDDIT'
 export const INVALIDATE_SUBREDDIT = 'INVALIDATE_SUBREDDIT'
+export const RECEIVE_SIZE = 'RECEIVE_SIZE'
 
 export function selectSubreddit(subreddit) {
   return {
     type: SELECT_SUBREDDIT,
     subreddit
+  }
+}
+
+export function selectSize(size) {
+  return {
+    type: RECEIVE_SIZE,
+    size
   }
 }
 
@@ -26,29 +34,28 @@ function requestPosts(subreddit) {
   }
 }
 
-function receivePosts(subreddit, json) {
+function receivePosts(subreddit, size, json) {
   return {
     type: RECEIVE_POSTS,
     subreddit,
-    posts: json.articles.map(news => json.articles),
+    size,
+    posts: json.articles,
     receivedAt: Date.now()
   }
 }
 
-let size = 10;
-
-function fetchPosts(subreddit) {
+function fetchPosts(subreddit, size) {
   return dispatch => {
     dispatch(requestPosts(subreddit))
     return fetch(`https://newsapi.org/v2/everything?q=${subreddit}&pageSize=${size}&apiKey=1b82488a0e2145eea6c06d156187e078`)
       .then(response => response.json())
-      .then(json => dispatch(receivePosts(subreddit, json)))
+      .then(json => dispatch(receivePosts(subreddit, size, json)))
   }
 }
 
-function shouldFetchPosts(state, subreddit) {
+function shouldFetchPosts(state, subreddit, size) {
   const posts = state.postsBySubreddit[subreddit]
-  if (!posts) {
+  if (!posts || posts.length !== size) {
     return true
   } else if (posts.isFetching) {
     return false
@@ -57,10 +64,10 @@ function shouldFetchPosts(state, subreddit) {
   }
 }
 
-export function fetchPostsIfNeeded(subreddit) {
+export function fetchPostsIfNeeded(subreddit, size) {
   return (dispatch, getState) => {
-    if (shouldFetchPosts(getState(), subreddit)) {
-      return dispatch(fetchPosts(subreddit))
+    if (shouldFetchPosts(getState(), subreddit,size)) {
+      return dispatch(fetchPosts(subreddit, size))
     }
   }
 }

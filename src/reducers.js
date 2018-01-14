@@ -3,7 +3,8 @@ import {
   SELECT_SUBREDDIT,
   INVALIDATE_SUBREDDIT,
   REQUEST_POSTS,
-  RECEIVE_POSTS
+  RECEIVE_POSTS,
+  RECEIVE_SIZE
 } from './actions'
 
 function selectedSubreddit(state = 'bitcoin', action) {
@@ -58,9 +59,19 @@ function postsBySubreddit(state = {}, action) {
   }
 }
 
+function selectedSize(state = 10, action) {
+  switch(action.type) {
+    case RECEIVE_SIZE:
+      return action.size;
+    default: 
+      return state;
+  }
+}
+
 const rootReducer = combineReducers({
   postsBySubreddit,
-  selectedSubreddit
+  selectedSubreddit,
+  selectedSize,
 })
 
 export default rootReducer
